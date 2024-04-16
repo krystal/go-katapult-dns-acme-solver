@@ -3,7 +3,7 @@ package solver
 import (
 	"log"
 
-	"github.com/krystal/go-katapult-acme-dns/dns"
+	"github.com/krystal/go-katapult-dns-acme-solver/dns"
 )
 
 type Solver struct {
