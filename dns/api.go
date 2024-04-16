@@ -15,7 +15,7 @@ func (c *Client) apiRequest(method string, baseURL string, params map[string]str
 	// Parse the base URL
 	u, err := url.Parse(baseURL)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("could not parse url: %w", err)
 	}
 
 	// Convert the params into URL values
@@ -36,26 +36,26 @@ func (c *Client) apiRequest(method string, baseURL string, params map[string]str
 		req.Header.Add("Content-Type", "application/json")
 	}
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("could not create request: %w", err)
 	}
 
 	// Add the authorization header to the request
 	req.Header.Add("Authorization", "Bearer "+c.APIToken)
 
-	// Perform the GET request
+	// Perform the request
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("could not make request: %w", err)
 	}
 	defer resp.Body.Close()
 
 	// Read the response body
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("could not read body: %w", err)
 	}
 
-	// If the result is not JSON, return that.
+	// If the result is not JSON, return an error.
 	if !strings.Contains(resp.Header.Get("Content-Type"), "application/json") {
 		return nil, fmt.Errorf("body was not in JSON format, not appropriate")
 	}
@@ -70,7 +70,7 @@ func (c *Client) apiRequest(method string, baseURL string, params map[string]str
 	errorResponse := &ErrorResponse{}
 	err = json.Unmarshal(body, &errorResponse)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("could not unmarshal error response: %w", err)
 	}
 
 	// We now just need to turn our error response in to an actual error
