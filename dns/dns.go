@@ -30,9 +30,9 @@ func (c *Client) DNSZone(zoneName string) (*DNSZone, error) {
 	return &zone.DNSZone, nil
 }
 
-// Return an array of all DNS records in the given zone matching the
-// given name and record type.
-func (c *Client) DNSRecordsByName(zone *DNSZone, recordType string, recordName string) ([]*DNSRecord, error) {
+// Return an array of all DNS records for a given zone where the filter matches
+// the record.
+func (c *Client) DNSRecords(zone *DNSZone, filter func(DNSRecord) bool) ([]*DNSRecord, error) {
 	body, err := c.apiRequest("GET", "core/v1/dns_zones/_/records", map[string]string{
 		"dns_zone[id]": zone.ID,
 	}, "")
@@ -48,7 +48,7 @@ func (c *Client) DNSRecordsByName(zone *DNSZone, recordType string, recordName s
 
 	records := make([]*DNSRecord, 0)
 	for _, record := range response.DNSRecords {
-		if record.FullName == recordName && record.Type == recordType {
+		if filter(record) {
 			records = append(records, &record)
 		}
 	}

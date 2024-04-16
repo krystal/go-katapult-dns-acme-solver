@@ -39,7 +39,7 @@ func (s *Solver) Set(zoneName string, recordName string, key string) error {
 	return nil
 }
 
-func (s *Solver) Delete(zoneName string, recordName string) error {
+func (s *Solver) CleanupAll(zoneName string, recordName string) error {
 	zone, err := s.dns.DNSZone(zoneName)
 	if err != nil {
 		s.logger.Printf("failed to find DNS zone with name %s (%s)", zoneName, err)
@@ -48,30 +48,51 @@ func (s *Solver) Delete(zoneName string, recordName string) error {
 
 	s.logger.Printf("got zone %s with id %s\n", zone.Name, zone.ID)
 
-	err = s.deleteAllRecordsByName(zone, recordName)
-	if err != nil {
-		s.logger.Printf("failed to delete DNS all records with name %s (%s)", recordName, err)
-		return err
-	}
-
-	return nil
-}
-
-func (s *Solver) deleteAllRecordsByName(zone *dns.DNSZone, recordName string) error {
-	records, err := s.dns.DNSRecordsByName(zone, recordName, "TXT")
+	records, err := s.dns.DNSRecords(zone, func(record dns.DNSRecord) bool {
+		return record.FullName == recordName && record.Type == "TXT"
+	})
 	if err != nil {
 		return err
 	}
 
 	if len(records) == 0 {
-		s.logger.Printf("no records found matching record %s in zone %s (%s)\n", recordName, zone.Name, zone.ID)
+		s.logger.Printf("no txt records found matching record %s in zone %s (%s)\n", recordName, zone.Name, zone.ID)
+		return nil
 	} else {
-		for _, r := range records {
-			s.logger.Printf("deleting record %s (%s)\n", r.FullName, r.ID)
-			err = s.dns.DeleteRecord(r)
-			if err != nil {
-				s.logger.Printf("failed to delete record %s (%s)\n", r.ID, err)
-			}
+		return s.deleteRecords(records)
+	}
+}
+
+func (s *Solver) Cleanup(zoneName string, recordName string, value string) error {
+	zone, err := s.dns.DNSZone(zoneName)
+	if err != nil {
+		s.logger.Printf("failed to find DNS zone with name %s (%s)", zoneName, err)
+		return err
+	}
+
+	s.logger.Printf("got zone %s with id %s\n", zone.Name, zone.ID)
+
+	records, err := s.dns.DNSRecords(zone, func(record dns.DNSRecord) bool {
+		return record.FullName == recordName && record.Type == "TXT" && record.Content == value
+	})
+	if err != nil {
+		return err
+	}
+
+	if len(records) == 0 {
+		s.logger.Printf("no txt records found matching record %s in zone %s (%s) with value %s\n", recordName, zone.Name, zone.ID, value)
+		return nil
+	} else {
+		return s.deleteRecords(records)
+	}
+}
+
+func (s *Solver) deleteRecords(records []*dns.DNSRecord) error {
+	for _, r := range records {
+		s.logger.Printf("deleting record %s (%s)\n", r.FullName, r.ID)
+		err := s.dns.DeleteRecord(r)
+		if err != nil {
+			s.logger.Printf("failed to delete record %s (%s)\n", r.ID, err)
 		}
 	}
 

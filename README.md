@@ -13,6 +13,9 @@ solver := solver.NewSolver("api-token", logger)
 // Set the record for the given zone with the given value.
 err := solver.Set("example.com", "_acme-challenge.example.com", "abcdef")
 
-// Cleanup the given records when appropriate
-err = solver.Cleanup("example.com", "_acme-challenge.example.com")
+// Delete records which match the given record and value
+err = solver.Cleanup("example.com", "_acme-challenge.example.com", "abcdef")
+
+// Delete all records regardless of their value
+err = solver.CleanupAll("example.com", "_acme-challenge.example.com")
 ```
