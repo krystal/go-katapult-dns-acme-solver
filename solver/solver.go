@@ -19,6 +19,14 @@ func NewSolver(apiToken string, logger *log.Logger) *Solver {
 	}
 }
 
+func NewSolverWithHost(host string, apiToken string, logger *log.Logger) *Solver {
+	dnsClient := dns.Client{Host: host, APIToken: apiToken}
+	return &Solver{
+		dns:    dnsClient,
+		logger: logger,
+	}
+}
+
 func (s *Solver) Set(zoneName string, recordName string, key string) error {
 	zone, err := s.dns.DNSZone(zoneName)
 	if err != nil {

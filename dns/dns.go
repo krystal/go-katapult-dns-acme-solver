@@ -10,6 +10,7 @@ import (
 // to allow for ACME challenge requests to be handled.
 type Client struct {
 	APIToken string
+	Host     string
 }
 
 // Return a DNS zone for the given name

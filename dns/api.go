@@ -9,11 +9,17 @@ import (
 	"strings"
 )
 
-func (c *Client) apiRequest(method string, baseURL string, params map[string]string, requestBody string) ([]byte, error) {
-	baseURL = "https://api.katapult.io/" + baseURL
+func (c *Client) baseHost() string {
+	if c.Host == "" {
+		return "https://api.katapult.io"
+	}
 
+	return c.Host
+}
+
+func (c *Client) apiRequest(method string, baseURL string, params map[string]string, requestBody string) ([]byte, error) {
 	// Parse the base URL
-	u, err := url.Parse(baseURL)
+	u, err := url.Parse(fmt.Sprintf("%s/%s", c.baseHost(), baseURL))
 	if err != nil {
 		return nil, fmt.Errorf("could not parse url: %w", err)
 	}

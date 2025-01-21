@@ -10,6 +10,10 @@ The API is fairly straight forward as shown below. The zone in question must be 
 logger := log.New(os.Stdout, "", log.LstdFlags)
 solver := solver.NewSolver("api-token", logger)
 
+// ... or if you want to connect to a different API endpoint you can use a 
+// solver with a different hostname
+solver := solver.NewSolverWithHost("https://other.katapult.io", "api-token", logger)
+
 // Set the record for the given zone with the given value.
 err := solver.Set("example.com", "_acme-challenge.example.com", "abcdef")
 
