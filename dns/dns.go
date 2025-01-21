@@ -13,29 +13,11 @@ type Client struct {
 	Host     string
 }
 
-// Return a DNS zone for the given name
-func (c *Client) DNSZone(zoneName string) (*DNSZone, error) {
-	body, err := c.apiRequest("GET", "core/v1/dns_zones/_", map[string]string{
-		"dns_zone[name]": zoneName,
-	}, "")
-	if err != nil {
-		return nil, err
-	}
-
-	zone := &DNSZoneResponse{}
-	err = json.Unmarshal(body, zone)
-	if err != nil {
-		return nil, err
-	}
-
-	return &zone.DNSZone, nil
-}
-
 // Return an array of all DNS records for a given zone where the filter matches
 // the record.
-func (c *Client) DNSRecords(zone *DNSZone, filter func(DNSRecord) bool) ([]*DNSRecord, error) {
+func (c *Client) DNSRecords(zoneName string, filter func(DNSRecord) bool) ([]*DNSRecord, error) {
 	body, err := c.apiRequest("GET", "core/v1/dns_zones/_/records", map[string]string{
-		"dns_zone[id]": zone.ID,
+		"dns_zone[name]": zoneName,
 	}, "")
 	if err != nil {
 		return nil, err
@@ -58,9 +40,9 @@ func (c *Client) DNSRecords(zone *DNSZone, filter func(DNSRecord) bool) ([]*DNSR
 }
 
 // Create a new TXT record in the given zone with the given name and content.
-func (c *Client) CreateTXTRecord(zone *DNSZone, recordName string, content string) (*DNSRecord, error) {
+func (c *Client) CreateTXTRecord(zone string, recordName string, content string) (*DNSRecord, error) {
 	requestBody := &DNSRecordCreateRequest{
-		DNSZone: &DNSZoneLookup{ID: zone.ID},
+		DNSZone: &DNSZoneLookup{Name: zone},
 		Properties: &DNSRecordProperties{
 			Name: recordName,
 			TTL:  60,

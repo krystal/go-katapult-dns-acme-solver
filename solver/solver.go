@@ -28,15 +28,7 @@ func NewSolverWithHost(host string, apiToken string, logger *log.Logger) *Solver
 }
 
 func (s *Solver) Set(zoneName string, recordName string, key string) error {
-	zone, err := s.dns.DNSZone(zoneName)
-	if err != nil {
-		s.logger.Printf("failed to find DNS zone with name %s (%s)", zoneName, err)
-		return err
-	}
-
-	s.logger.Printf("got zone %s with id %s\n", zone.Name, zone.ID)
-
-	newRecord, err := s.dns.CreateTXTRecord(zone, recordName, key)
+	newRecord, err := s.dns.CreateTXTRecord(zoneName, recordName, key)
 	if err != nil {
 		s.logger.Printf("failed to create TXT record %s (%s)", recordName, err)
 		return err
@@ -48,15 +40,7 @@ func (s *Solver) Set(zoneName string, recordName string, key string) error {
 }
 
 func (s *Solver) CleanupAll(zoneName string, recordName string) error {
-	zone, err := s.dns.DNSZone(zoneName)
-	if err != nil {
-		s.logger.Printf("failed to find DNS zone with name %s (%s)", zoneName, err)
-		return err
-	}
-
-	s.logger.Printf("got zone %s with id %s\n", zone.Name, zone.ID)
-
-	records, err := s.dns.DNSRecords(zone, func(record dns.DNSRecord) bool {
+	records, err := s.dns.DNSRecords(zoneName, func(record dns.DNSRecord) bool {
 		return record.FullName == recordName && record.Type == "TXT"
 	})
 	if err != nil {
@@ -64,7 +48,7 @@ func (s *Solver) CleanupAll(zoneName string, recordName string) error {
 	}
 
 	if len(records) == 0 {
-		s.logger.Printf("no txt records found matching record %s in zone %s (%s)\n", recordName, zone.Name, zone.ID)
+		s.logger.Printf("no txt records found matching record %s in zone %s\n", recordName, zoneName)
 		return nil
 	} else {
 		return s.deleteRecords(records)
@@ -72,15 +56,7 @@ func (s *Solver) CleanupAll(zoneName string, recordName string) error {
 }
 
 func (s *Solver) Cleanup(zoneName string, recordName string, value string) error {
-	zone, err := s.dns.DNSZone(zoneName)
-	if err != nil {
-		s.logger.Printf("failed to find DNS zone with name %s (%s)", zoneName, err)
-		return err
-	}
-
-	s.logger.Printf("got zone %s with id %s\n", zone.Name, zone.ID)
-
-	records, err := s.dns.DNSRecords(zone, func(record dns.DNSRecord) bool {
+	records, err := s.dns.DNSRecords(zoneName, func(record dns.DNSRecord) bool {
 		return record.FullName == recordName && record.Type == "TXT" && record.Content == value
 	})
 	if err != nil {
@@ -88,7 +64,7 @@ func (s *Solver) Cleanup(zoneName string, recordName string, value string) error
 	}
 
 	if len(records) == 0 {
-		s.logger.Printf("no txt records found matching record %s in zone %s (%s) with value %s\n", recordName, zone.Name, zone.ID, value)
+		s.logger.Printf("no txt records found matching record %s in zone %s with value %s\n", recordName, zoneName, value)
 		return nil
 	} else {
 		return s.deleteRecords(records)
